@@ -8,9 +8,13 @@ app.config['SECRET_KEY'] = 'kanban-secret-key-2026'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///kanban.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+app.config['SESSION_COOKIE_SECURE'] = False
+app.config['SESSION_TYPE'] = 'filesystem'
+
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
-CORS(app, supports_credentials=True)
+CORS(app, supports_credentials=True, origins=['http://localhost:3000', 'http://localhost:3001'])
 
 from app import models
 from app import routes
