@@ -1,45 +1,44 @@
-import axios from 'axios';
+import React, { createContext, useState, useEffect } from 'react';
+import { authApi } from '../services/api';
 
-const api = axios.create({
-  baseURL: 'http://localhost:5000/api',
-  withCredentials: true,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-});
+export const AuthContext = createContext();
 
-export const authApi = {
-  login: (username, password) =>
-    api.post('/auth/login', { username, password }),
-  logout: () => api.post('/auth/logout'),
-  register: (username, password, role) =>
-    api.post('/auth/register', { username, password, role }),
-  getCurrentUser: () => api.get('/auth/me'),
+export const AuthProvider = ({ children }) => {
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    checkAuth();
+  }, []);
+
+  const checkAuth = async () => {
+    try {
+      const response = await authApi.getCurrentUser();
+      setUser(response.data.user);
+    } catch (error) {
+      setUser(null);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const login = (userData) => {
+    setUser(userData);
+  };
+
+  const logout = async () => {
+    try {
+      await authApi.logout();
+    } catch (error) {
+      console.error('Logout error:', error);
+    } finally {
+      setUser(null);
+    }
+  };
+
+  return (
+    <AuthContext.Provider value={{ user, loading, login, logout }}>
+      {children}
+    </AuthContext.Provider>
+  );
 };
-
-export const userApi = {
-  getAll: () => api.get('/users'),
-};
-
-export const projectApi = {
-  getAll: () => api.get('/projects'),
-  getById: (id) => api.get(`/projects/${id}`),
-  create: (data) => api.post('/projects', data),
-  update: (id, data) => api.put(`/projects/${id}`, data),
-  delete: (id) => api.delete(`/projects/${id}`),
-};
-
-export const taskApi = {
-  getByProject: (projectId) => api.get(`/projects/${projectId}/tasks`),
-  getById: (id) => api.get(`/tasks/${id}`),
-  create: (projectId, data) => api.post(`/projects/${projectId}/tasks`, data),
-  update: (id, data) => api.put(`/tasks/${id}`, data),
-  delete: (id) => api.delete(`/tasks/${id}`),
-  reorder: (tasks) => api.post('/tasks/reorder', { tasks }),
-  getMyTasks: (projectId) => {
-    const params = projectId ? { project_id: projectId } : {};
-    return api.get('/tasks/my', { params });
-  },
-};
-
-export default api;
